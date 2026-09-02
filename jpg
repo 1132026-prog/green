@@ -1,0 +1,228 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+import os
+import time
+
+# =========================
+# 1️⃣ 讀取圖片
+# =========================
+
+# 預設圖片路徑，可依需求更改為你本機的實際路徑
+image_path = "./Day0710_.jpg"
+
+if not os.path.exists(image_path):
+    print(f"⚠️ 找不到預設圖片: {image_path}")
+    image_path = input("請手動輸入圖片的完整路徑: ").strip("-'\" ")
+    if not os.path.exists(image_path):
+        raise ValueError("圖片路徑無效，無法繼續執行")
+
+img_bgr = cv2.imread(image_path)
+
+if img_bgr is None:
+    raise ValueError("圖片讀取失敗：確保路徑正確且圖片未損壞")
+
+img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+# =========================
+# 2️⃣ 高階綠色分割：Lab 色彩空間 (a* 通道專攻綠葉)
+# =========================
+
+# 轉為 CIE L*a*b* 色彩空間
+img_lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2Lab)
+L_chan, a_chan, b_chan = cv2.split(img_lab)
+
+# 在 OpenCV 中，a* < 118 屬於非常純粹的綠色
+# 能精準分離綠色葉片與黃棕色根部/黑色桌面
+lab_green_mask = (a_chan < 118).astype(np.uint8) * 255
+
+# =========================
+# 3️⃣ HSV 雙重過濾 (排除低飽和與過暗背景)
+# =========================
+
+hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+
+# H: 綠色區間 (30~85), S: 飽和度 > 40 (剔除白灰), V: 亮度 > 30 (剔除深色陰影)
+lower_green = np.array([30, 40, 30])
+upper_green = np.array([85, 255, 255])
+hsv_green_mask = cv2.inRange(hsv, lower_green, upper_green)
+
+# 結合 Lab 與 HSV 遮罩
+green_mask = cv2.bitwise_and(lab_green_mask, hsv_green_mask)
+
+# 形態學運算：消除雜點與邊緣毛刺
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_OPEN, kernel)
+green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_CLOSE, kernel)
+
+# =========================
+# 4️⃣ 精準提取綠葉主體並建立凸包 (Convex Hull)
+# =========================
+
+contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+hull_mask = np.zeros_like(green_mask)
+final_green_mask = np.zeros_like(green_mask)
+hull_overlay = img_rgb.copy()
+has_plant = False
+
+if contours:
+    # 篩選面積大於 2000 像素的區域（避免雜點）
+    valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 2000]
+
+    if valid_contours:
+        # 只取面積最大的「純綠葉區域」
+        max_contour = max(valid_contours, key=cv2.contourArea)
+
+        # 只對綠葉計算凸包
+        hull = cv2.convexHull(max_contour)
+
+        # 繪製凸包內部區域 (ROI)
+        cv2.drawContours(hull_mask, [hull], -1, 255, thickness=cv2.FILLED)
+
+        # 將最終遮罩限定在綠葉凸包內
+        final_green_mask = cv2.bitwise_and(green_mask, hull_mask)
+
+        # 繪製紅框供確認
+        cv2.drawContours(hull_overlay, [hull], -1, (255, 0, 0), 3)
+        has_plant = True
+
+if not has_plant:
+    final_green_mask = green_mask.copy()
+
+# 摳圖：非植物部分設為純白背景
+extracted_green = np.ones_like(img_rgb, dtype=np.uint8) * 255
+extracted_green[final_green_mask > 0] = img_rgb[final_green_mask > 0]
+
+# =========================
+# 5️⃣ G 通道分析 (自動排除 G=255 的反光過曝點)
+# =========================
+
+G_values = img_bgr[:, :, 1][final_green_mask > 0]
+
+# 關鍵：剔除反光點 (G == 255)，還原真正的葉色分佈
+valid_G_values = G_values[G_values < 255] if len(G_values) > 0 else []
+
+if len(valid_G_values) > 0:
+    counts = np.bincount(valid_G_values, minlength=256)
+    peak_g_value = np.argmax(counts)
+    peak_count = counts[peak_g_value]
+    mean_g_value = np.mean(valid_G_values)
+else:
+    counts = np.zeros(256, dtype=int)
+    peak_g_value = 0
+    peak_count = 0
+    mean_g_value = 0
+
+# =========================
+# 6️⃣ 數據統計
+# =========================
+
+green_pixel_count = np.count_nonzero(final_green_mask)
+hull_pixel_count = np.count_nonzero(hull_mask)
+total_pixel_count = img_bgr.shape[0] * img_bgr.shape[1]
+
+green_area_ratio = (green_pixel_count / total_pixel_count) * 100
+solidity = (green_pixel_count / hull_pixel_count * 100) if hull_pixel_count > 0 else 0
+
+print("\n" + "=" * 50)
+print("📊 精準植物綠葉區域分析數據 (Lab + HSV + Convex Hull)")
+print("-" * 50)
+print(f"🔹 總像素數       : {total_pixel_count:,}")
+print(f"🔹 綠葉凸包像素數 : {hull_pixel_count:,}")
+print(f"🔹 綠葉實際像素數 : {green_pixel_count:,}")
+print(f"🔹 綠葉面積佔比   : {green_area_ratio:.4f}%")
+print(f"🔹 葉片密實度     : {solidity:.2f}% (綠葉/凸包面積)")
+print(f"🔹 Peak G (扣除反光): {peak_g_value}")
+print(f"🔹 Mean G         : {mean_g_value:.2f}")
+print("=" * 50)
+
+# =========================
+# 7️⃣ 顯示視覺化結果
+# =========================
+
+fig, axes = plt.subplots(1, 4, figsize=(22, 5))
+
+axes[0].imshow(img_rgb)
+axes[0].set_title("Original")
+axes[0].axis('off')
+
+axes[1].imshow(hull_overlay)
+axes[1].set_title("Leaf-Only Convex Hull")
+axes[1].axis('off')
+
+axes[2].imshow(extracted_green)
+axes[2].set_title("Extracted Green Leaf")
+axes[2].axis('off')
+
+axes[3].plot(range(256), counts, color='green')
+if peak_count > 0:
+    axes[3].annotate(
+        f'Peak={peak_g_value}',
+        xy=(peak_g_value, peak_count),
+        xytext=(peak_g_value + 20, peak_count),
+        arrowprops=dict(facecolor='red')
+    )
+axes[3].set_title("G Channel (Excl. Glare)")
+axes[3].grid(True)
+
+plt.tight_layout()
+plt.show()
+
+# =========================
+# 8️⃣ 匯出 PDF 報告
+# =========================
+
+pdf_path = "green_analysis_report.pdf"  # 存於當前目錄
+
+with PdfPages(pdf_path) as pdf:
+
+    fig = plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.imshow(hull_overlay)
+    plt.title("Leaf Convex Hull ROI")
+    plt.axis('off')
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(extracted_green)
+    plt.title("Extracted Green Leaf")
+    plt.axis('off')
+
+    pdf.savefig(fig)
+    plt.close()
+
+    fig = plt.figure(figsize=(10, 6))
+    plt.plot(range(256), counts, color='green')
+    if peak_count > 0:
+        plt.annotate(
+            f'Peak={peak_g_value}',
+            xy=(peak_g_value, peak_count),
+            xytext=(peak_g_value + 20, peak_count),
+            arrowprops=dict(facecolor='black')
+        )
+    plt.title("G Channel Distribution (Excl. G=255)")
+    plt.grid(True)
+
+    pdf.savefig(fig)
+    plt.close()
+
+    fig = plt.figure(figsize=(8, 10))
+    report = (
+        f"Plant Analysis Report (High-Precision Segmentation)\n\n"
+        f"Total Pixels    : {total_pixel_count}\n"
+        f"Hull Pixels     : {hull_pixel_count}\n"
+        f"Green Pixels    : {green_pixel_count}\n"
+        f"Area Ratio      : {green_area_ratio:.4f}%\n"
+        f"Solidity        : {solidity:.2f}%\n\n"
+        f"Peak G          : {peak_g_value} (Excl. Glare)\n"
+        f"Mean G          : {mean_g_value:.2f}\n"
+    )
+
+    plt.text(0.1, 0.5, report, fontsize=14)
+    plt.axis('off')
+
+    pdf.savefig(fig)
+    plt.close()
+
+print(f"🚀 PDF 已建立並儲存至本機目錄: {os.path.abspath(pdf_path)}")
