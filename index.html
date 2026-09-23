@@ -14,19 +14,20 @@
         }
 
         body {
-            background-color: #f9f9f9;
+            background-color: #f4f4f4;
             overflow-x: hidden;
         }
 
-        /* --- 頂部導覽列 (綠色橫幅) --- */
+        /* --- 頂部導覽列 (綠色橫幅固定在上) --- */
         .navbar {
-            background-color: #8BC34A;
+            background-color: #8BC34A; /* 淺綠色 */
             width: 100%;
             padding: 15px 0;
             position: fixed;
             top: 0;
             left: 0;
             z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .nav-links {
@@ -51,55 +52,19 @@
             transform: scale(1.05);
         }
 
-        /* --- 第一頁 (主視覺區塊) --- */
-        .hero-section {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 120px 40px 60px 40px;
-            background-image: url('https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?q=80&w=2000&auto=format&fit=crop'); 
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
-        .main-title {
-            color: white;
-            font-size: 44px;
-            font-weight: bold;
-            margin-bottom: 25px;
-            text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.8);
-            max-width: 1100px;
-            line-height: 1.3;
-        }
-
-        .sub-title {
-            color: white;
-            font-size: 22px;
-            font-weight: normal;
-            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
-            max-width: 1000px;
-            line-height: 1.6;
-        }
-
-        /* --- 第二頁 (Canva 內容區) --- */
-        .canva-container {
+        /* --- 主內容區塊 (放置 Canva 設計) --- */
+        .main-container {
             width: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 60px 20px;
-            background-color: #ffffff;
+            padding: 80px 20px 40px 20px; /* 上方預留 80px 避開選單遮擋 */
         }
 
         .canva-embed-wrapper {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1100px; /* 控制 Canva 頁面最大寬度，呈現最佳視覺比例 */
             text-align: center;
         }
     </style>
@@ -117,25 +82,17 @@
         </ul>
     </nav>
 
-    <!-- 第一頁：標題與內文 -->
-    <main class="hero-section">
-        <h1 class="main-title">讓每一葉綠意，都成為抵禦氣候天災的堅韌防線</h1>
-        <p class="sub-title">
-            面對極端氣候帶來的農損危機，我們結合AI與元素分析儀，精準量化作物生長固碳量。推動建立「草本碳權農業保險」機制，將植物的生態價值轉化為在地農民的防災補償，實現環保與農業的實質雙贏。
-        </p>
-    </main>
-
-    <!-- 第二頁：Canva 嵌入內容 -->
-    <section class="canva-container">
+    <!-- 主體內容：嵌入新版長頁面 Canva 設計 -->
+    <main class="main-container">
         <div class="canva-embed-wrapper">
-            <div style="position: relative; width: 100%; height: 0; padding-top: 54.5898%; padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden; border-radius: 8px; will-change: transform;">
+            <div style="position: relative; width: 100%; height: 0; padding-top: 231.8448%; padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden; border-radius: 8px; will-change: transform;">
               <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0;margin: 0;"
-                src="https://www.canva.com/design/DAHTugD_qPc/GNO5sTLrbRItQoue2pLoIA/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
+                src="https://www.canva.com/design/DAHVoMCYBw4/rDB0qQC2BGQiIaa003WeXA/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
               </iframe>
             </div>
-            1132033 設計的 <a href="https://www.canva.com/design/DAHTugD_qPc/GNO5sTLrbRItQoue2pLoIA/view?utm_content=DAHTugD_qPc&amp;utm_campaign=designshare&amp;utm_medium=embeds&amp;utm_source=link" target="_blank" rel="noopener">拍照上傳</a>
+            1143006 設計的 <a href="https://www.canva.com/design/DAHVoMCYBw4/rDB0qQC2BGQiIaa003WeXA/view?utm_content=DAHVoMCYBw4&amp;utm_campaign=designshare&amp;utm_medium=embeds&amp;utm_source=link" target="_blank" rel="noopener">Freelance Portfolio Website in Lime Green Blue Black Bold Dynamic Style</a>
         </div>
-    </section>
+    </main>
 
 </body>
 </html>
