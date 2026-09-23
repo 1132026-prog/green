@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拍照上傳 - 植物專題</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: '微軟正黑體', sans-serif; }
+        body { background-color: #f7f9f6; color: #333; }
+        .custom-navbar { background-color: #A3E000; width: 100%; padding: 10px 40px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .nav-brand { font-size: 26px; font-weight: 900; color: #1a1a1a; text-decoration: none; }
+        .nav-menu { display: flex; align-items: center; gap: 35px; list-style: none; }
+        .nav-menu a { color: #222222; text-decoration: none; font-size: 18px; font-weight: bold; padding: 5px 8px; }
+        .nav-menu a:hover { color: #ffffff; }
+        .photo-btn { background-color: #FF3B71 !important; color: #fff !important; padding: 8px 20px !important; border-radius: 20px; }
+        .container { max-width: 600px; margin: 110px auto 40px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        .page-title { font-size: 28px; color: #2e5a1c; margin-bottom: 20px; }
+        .upload-area { border: 3px dashed #A3E000; padding: 40px 20px; border-radius: 12px; background: #fafdf5; cursor: pointer; margin-bottom: 20px; }
+        .upload-area:hover { background: #f0f9e8; }
+        .upload-icon { font-size: 48px; margin-bottom: 10px; }
+        #file-input { display: none; }
+        .btn-submit { background-color: #FF3B71; color: white; border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; }
+        #preview-img { max-width: 100%; margin-top: 15px; border-radius: 8px; display: none; }
+    </style>
+</head>
+<body>
+    <nav class="custom-navbar">
+        <a href="index.html" class="nav-brand">主題名字</a>
+        <ul class="nav-menu">
+            <li><a href="issues.html">相關議題</a></li>
+            <li><a href="target.html">網站目標</a></li>
+            <li><a href="about.html">關於我們</a></li>
+            <li><a href="upload.html" class="photo-btn">📷 拍照</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1 class="page-title">📷 植物拍照與照片上傳</h1>
+        <label for="file-input">
+            <div class="upload-area">
+                <div class="upload-icon">📸</div>
+                <p style="font-size: 18px; font-weight: bold;">點擊此處拍照或上傳植物圖片</p>
+                <p style="color: #888; font-size: 14px; margin-top: 5px;">支援 JPG、PNG 格式</p>
+            </div>
+        </label>
+        <input type="file" id="file-input" accept="image/*" capture="environment" onchange="previewFile()">
+        <img id="preview-img" alt="圖片預覽">
+        <br><br>
+        <button class="btn-submit" onclick="alert('照片已接收！AI 分析功能準備中...')">開始 AI 分析</button>
+    </div>
+    <script>
+        function previewFile() {
+            const preview = document.getElementById('preview-img');
+            const file = document.getElementById('file-input').files[0];
+            const reader = new FileReader();
+            reader.onloadend = function () { preview.src = reader.result; preview.style.display = "block"; }
+            if (file) { reader.readAsDataURL(file); }
+        }
+    </script>
+</body>
+</html>
