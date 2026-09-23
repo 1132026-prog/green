@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>植物專題首頁</title>
     <style>
-        /* --- 基礎設定：全螢幕消除邊距 --- */
+        /* --- 基礎設定：全螢幕消除所有外距 --- */
         * {
             margin: 0;
             padding: 0;
@@ -19,47 +19,14 @@
             overflow-x: hidden; /* 防止橫向滾動條 */
         }
 
-        /* --- 頂部導覽列 (固定最上方) --- */
-        .navbar {
-            background-color: #8BC34A; /* 淺綠色 */
-            width: 100%;
-            padding: 15px 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-
-        .nav-links {
-            display: flex;
-            justify-content: center;
-            gap: 60px;
-            list-style: none;
-        }
-
-        .nav-links li a {
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 5px 10px;
-            transition: all 0.3s ease;
-        }
-
-        .nav-links li a:hover {
-            color: #ffffff;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-            transform: scale(1.05);
-        }
-
-        /* --- 滿版內容區塊 --- */
+        /* --- 滿版內容區塊 (從最頂端 0px 開始) --- */
         .main-container {
             width: 100%;
-            padding-top: 55px; /* 預留上方空間避開導覽列 */
+            padding: 0;
+            margin: 0;
         }
 
-        /* 滿版 Canva 容器 (無圓角、無外框、無陰影) */
+        /* 滿版 Canva 容器 (無縫貼合頂部) */
         .canva-full-embed {
             position: relative;
             width: 100%;
@@ -82,18 +49,7 @@
 </head>
 <body>
 
-    <!-- 頂部固定導覽列 -->
-    <nav class="navbar">
-        <ul class="nav-links">
-            <li><a href="https://1132026-prog.github.io/green/" target="_blank">新增少量內文文字</a></li>
-            <li><a href="https://example.com/link2" target="_blank">照片上傳</a></li>
-            <li><a href="https://example.com/link3" target="_blank">操作說明</a></li>
-            <li><a href="https://1132026-prog.github.io/green/services.html">服務項目</a></li>
-            <li><a href="https://1132026-prog.github.io/green/about.html" target="_blank">關於我們</a></li>
-        </ul>
-    </nav>
-
-    <!-- 滿版首頁主體 (Canva 無縫嵌入) -->
+    <!-- 滿版首頁主體 (從最上方直接顯示 Canva 自帶的導覽列與首頁) -->
     <main class="main-container">
         <div class="canva-full-embed">
             <iframe loading="lazy" 
