@@ -5,141 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>植物專題首頁</title>
     <style>
-        /* --- 基礎設定 --- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: '微軟正黑體', 'Segoe UI', Arial, sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: '微軟正黑體', 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #ffffff; overflow-x: hidden; }
 
-        body {
-            background-color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        /* --- 原生 HTML 互動導覽列 --- */
         .custom-navbar {
-            background-color: #A3E000; /* 螢光綠色 */
+            background-color: #A3E000;
             width: 100%;
             padding: 10px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
+            top: 0; left: 0; z-index: 1000;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
-
-        /* 左側標題 */
-        .nav-brand {
-            font-size: 26px;
-            font-weight: 900;
-            color: #1a1a1a;
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-
-        .nav-brand:hover {
-            opacity: 0.8;
-        }
-
-        /* 右側選單 */
-        .nav-menu {
-            display: flex;
-            align-items: center;
-            gap: 35px;
-            list-style: none;
-        }
-
-        .nav-menu a {
-            color: #222222;
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 5px 8px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-menu a:hover {
-            color: #ffffff;
-            text-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
-        }
-
-        /* 桃紅色拍照按鈕 */
+        .nav-brand { font-size: 26px; font-weight: 900; color: #1a1a1a; text-decoration: none; }
+        .nav-menu { display: flex; align-items: center; gap: 35px; list-style: none; }
+        .nav-menu a { color: #222222; text-decoration: none; font-size: 18px; font-weight: bold; padding: 5px 8px; transition: all 0.2s ease; }
+        .nav-menu a:hover { color: #ffffff; text-shadow: 0 0 4px rgba(0, 0, 0, 0.4); }
         .photo-btn {
-            background-color: #FF3B71 !important;
-            color: #ffffff !important;
-            padding: 8px 20px !important;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-            transition: transform 0.2s, background-color 0.2s !important;
+            background-color: #FF3B71 !important; color: #ffffff !important;
+            padding: 8px 20px !important; border-radius: 20px;
+            display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); transition: transform 0.2s;
         }
+        .photo-btn:hover { transform: scale(1.05); }
 
-        .photo-btn:hover {
-            background-color: #E02E5F !important;
-            transform: scale(1.05);
-        }
-
-        /* --- 滿版 Canva 內容區塊 --- */
-        .main-container {
-            width: 100%;
-            padding-top: 55px; /* 預留選單高度避開遮擋 */
-        }
-
-        .canva-full-embed {
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-top: 231.8448%; /* 精準維持長頁面比例 */
-            overflow: hidden;
-        }
-
-        .canva-full-embed iframe {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            border: none;
-        }
+        .main-container { width: 100%; padding-top: 55px; }
+        .canva-full-embed { position: relative; width: 100%; height: 0; padding-top: 231.8448%; overflow: hidden; }
+        .canva-full-embed iframe { position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; }
     </style>
 </head>
 <body>
-
-    <!-- 頂部互動導覽列 -->
     <nav class="custom-navbar">
         <a href="index.html" class="nav-brand">主題名字</a>
-
         <ul class="nav-menu">
             <li><a href="issues.html">相關議題</a></li>
             <li><a href="target.html">網站目標</a></li>
             <li><a href="about.html">關於我們</a></li>
-            <li>
-                <a href="upload.html" class="photo-btn">
-                    📷 拍照
-                </a>
-            </li>
+            <li><a href="upload.html" class="photo-btn">📷 拍照</a></li>
         </ul>
     </nav>
 
-    <!-- 主體內容：已替換最新 Canva 嵌入連結 -->
     <main class="main-container">
         <div class="canva-full-embed">
-            <iframe loading="lazy" 
-                src="https://www.canva.com/design/DAHV_uy4qEM/CL37C449sU_RkrzpDguS0Q/view?embed" 
-                allowfullscreen="allowfullscreen" 
-                allow="fullscreen">
-            </iframe>
+            <iframe loading="lazy" src="https://www.canva.com/design/DAHV_uy4qEM/CL37C449sU_RkrzpDguS0Q/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
         </div>
     </main>
-
 </body>
 </html>
