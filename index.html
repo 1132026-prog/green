@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>植物專題首頁</title>
     <style>
-        /* --- 基礎設定 --- */
+        /* --- 基礎設定：全螢幕消除邊距 --- */
         * {
             margin: 0;
             padding: 0;
@@ -13,12 +13,13 @@
             font-family: '微軟正黑體', 'Segoe UI', Arial, sans-serif;
         }
 
-        body {
-            background-color: #f4f4f4;
-            overflow-x: hidden;
+        html, body {
+            width: 100%;
+            background-color: #ffffff;
+            overflow-x: hidden; /* 防止橫向滾動條 */
         }
 
-        /* --- 頂部導覽列 (綠色橫幅固定在上) --- */
+        /* --- 頂部導覽列 (固定最上方) --- */
         .navbar {
             background-color: #8BC34A; /* 淺綠色 */
             width: 100%;
@@ -27,7 +28,7 @@
             top: 0;
             left: 0;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .nav-links {
@@ -52,26 +53,36 @@
             transform: scale(1.05);
         }
 
-        /* --- 主內容區塊 (放置 Canva 設計) --- */
+        /* --- 滿版內容區塊 --- */
         .main-container {
             width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 80px 20px 40px 20px; /* 上方預留 80px 避開選單遮擋 */
+            padding-top: 55px; /* 預留上方空間避開導覽列 */
         }
 
-        .canva-embed-wrapper {
+        /* 滿版 Canva 容器 (無圓角、無外框、無陰影) */
+        .canva-full-embed {
+            position: relative;
             width: 100%;
-            max-width: 1100px; /* 控制 Canva 頁面最大寬度，呈現最佳視覺比例 */
-            text-align: center;
+            height: 0;
+            padding-top: 231.8448%; /* 精準維持你的 Canva 頁面長度比例 */
+            overflow: hidden;
+        }
+
+        .canva-full-embed iframe {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            border: none;
+            padding: 0;
+            margin: 0;
         }
     </style>
 </head>
 <body>
 
-    <!-- 頂部導覽列 -->
+    <!-- 頂部固定導覽列 -->
     <nav class="navbar">
         <ul class="nav-links">
             <li><a href="https://1132026-prog.github.io/green/" target="_blank">新增少量內文文字</a></li>
@@ -82,15 +93,14 @@
         </ul>
     </nav>
 
-    <!-- 主體內容：嵌入新版長頁面 Canva 設計 -->
+    <!-- 滿版首頁主體 (Canva 無縫嵌入) -->
     <main class="main-container">
-        <div class="canva-embed-wrapper">
-            <div style="position: relative; width: 100%; height: 0; padding-top: 231.8448%; padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden; border-radius: 8px; will-change: transform;">
-              <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0;margin: 0;"
-                src="https://www.canva.com/design/DAHVoMCYBw4/rDB0qQC2BGQiIaa003WeXA/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
-              </iframe>
-            </div>
-            1143006 設計的 <a href="https://www.canva.com/design/DAHVoMCYBw4/rDB0qQC2BGQiIaa003WeXA/view?utm_content=DAHVoMCYBw4&amp;utm_campaign=designshare&amp;utm_medium=embeds&amp;utm_source=link" target="_blank" rel="noopener">Freelance Portfolio Website in Lime Green Blue Black Bold Dynamic Style</a>
+        <div class="canva-full-embed">
+            <iframe loading="lazy" 
+                src="https://www.canva.com/design/DAHVoMCYBw4/rDB0qQC2BGQiIaa003WeXA/view?embed" 
+                allowfullscreen="allowfullscreen" 
+                allow="fullscreen">
+            </iframe>
         </div>
     </main>
 
