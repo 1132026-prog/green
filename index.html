@@ -18,9 +18,9 @@
             overflow-x: hidden;
         }
 
-        /* --- 原生 HTML 導覽列 (還原 Canva 螢光綠選單風格) --- */
+        /* --- 原生 HTML 互動導覽列 --- */
         .custom-navbar {
-            background-color: #A3E000; /* 還原 Canva 螢光綠色 */
+            background-color: #A3E000; /* 螢光綠色 */
             width: 100%;
             padding: 10px 40px;
             display: flex;
@@ -46,7 +46,7 @@
             opacity: 0.8;
         }
 
-        /* 選單容器 */
+        /* 右側選單 */
         .nav-menu {
             display: flex;
             align-items: center;
@@ -54,7 +54,6 @@
             list-style: none;
         }
 
-        /* 選單文字連結與互動效果 */
         .nav-menu a {
             color: #222222;
             text-decoration: none;
@@ -71,7 +70,7 @@
 
         /* 桃紅色拍照按鈕 */
         .photo-btn {
-            background-color: #FF3B71 !important; /* 桃紅色 */
+            background-color: #FF3B71 !important;
             color: #ffffff !important;
             padding: 8px 20px !important;
             border-radius: 20px;
@@ -86,20 +85,20 @@
 
         .photo-btn:hover {
             background-color: #E02E5F !important;
-            transform: scale(1.05); /* 游標移上去微微放大 */
+            transform: scale(1.05);
         }
 
-        /* --- 主內容區塊 --- */
+        /* --- 滿版 Canva 內容區塊 --- */
         .main-container {
             width: 100%;
-            padding-top: 55px; /* 避開頂部固定導覽列 */
+            padding-top: 55px; /* 預留選單高度避開遮擋 */
         }
 
         .canva-full-embed {
             position: relative;
             width: 100%;
             height: 0;
-            padding-top: 231.8448%;
+            padding-top: 231.8448%; /* 精準維持長頁面比例 */
             overflow: hidden;
         }
 
@@ -117,15 +116,12 @@
 
     <!-- 頂部互動導覽列 -->
     <nav class="custom-navbar">
-        <!-- 左側主題名稱 (點擊回到首頁) -->
         <a href="index.html" class="nav-brand">主題名字</a>
 
-        <!-- 右側選單與互動連結 -->
         <ul class="nav-menu">
             <li><a href="issues.html">相關議題</a></li>
             <li><a href="target.html">網站目標</a></li>
             <li><a href="about.html">關於我們</a></li>
-            <!-- 拍照按鈕 (填入照片上傳頁面的檔名或連結) -->
             <li>
                 <a href="upload.html" class="photo-btn">
                     📷 拍照
@@ -134,11 +130,11 @@
         </ul>
     </nav>
 
-    <!-- 下方 Canva 設計內容 -->
+    <!-- 主體內容：已替換最新 Canva 嵌入連結 -->
     <main class="main-container">
         <div class="canva-full-embed">
             <iframe loading="lazy" 
-                src="https://www.canva.com/design/DAHVoMCYBw4/rDB0qQC2BGQiIaa003WeXA/view?embed" 
+                src="https://www.canva.com/design/DAHV_uy4qEM/CL37C449sU_RkrzpDguS0Q/view?embed" 
                 allowfullscreen="allowfullscreen" 
                 allow="fullscreen">
             </iframe>
