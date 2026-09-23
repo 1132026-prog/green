@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相關議題 - 植物專題</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: '微軟正黑體', sans-serif; }
+        body { background-color: #f7f9f6; color: #333; }
+        .custom-navbar { background-color: #A3E000; width: 100%; padding: 10px 40px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .nav-brand { font-size: 26px; font-weight: 900; color: #1a1a1a; text-decoration: none; }
+        .nav-menu { display: flex; align-items: center; gap: 35px; list-style: none; }
+        .nav-menu a { color: #222222; text-decoration: none; font-size: 18px; font-weight: bold; padding: 5px 8px; }
+        .nav-menu a:hover { color: #ffffff; }
+        .photo-btn { background-color: #FF3B71 !important; color: #fff !important; padding: 8px 20px !important; border-radius: 20px; }
+        .container { max-width: 1000px; margin: 100px auto 40px; padding: 20px; }
+        .page-title { font-size: 32px; color: #2e5a1c; margin-bottom: 25px; text-align: center; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .card h3 { color: #43a047; margin-bottom: 12px; font-size: 22px; }
+        .card p { font-size: 16px; line-height: 1.6; color: #555; }
+    </style>
+</head>
+<body>
+    <nav class="custom-navbar">
+        <a href="index.html" class="nav-brand">主題名字</a>
+        <ul class="nav-menu">
+            <li><a href="issues.html">相關議題</a></li>
+            <li><a href="target.html">網站目標</a></li>
+            <li><a href="about.html">關於我們</a></li>
+            <li><a href="upload.html" class="photo-btn">📷 拍照</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1 class="page-title">🌾 相關議題探討</h1>
+        <div class="card-grid">
+            <div class="card"><h3>極端氣候與農損衝擊</h3><p>隨著全球氣溫升高，旱災、暴雨與病蟲害頻率激增，傳統農業面臨極大的減產危機與經濟風險。</p></div>
+            <div class="card"><h3>草本植物的固碳潛力</h3><p>草本植物具備快速生長與碳吸收特性，能有效轉化大氣中的二氧化碳，是推動綠色碳權的重要媒介。</p></div>
+            <div class="card"><h3>草本碳權農業保險</h3><p>透過將植物固碳量數位化與數據化，建立新型態農業保險，讓農民在防災的同時獲得實質碳補償。</p></div>
+        </div>
+    </div>
+</body>
+</html>
