@@ -33,7 +33,7 @@
         .btn-submit { background-color: #FF3B71; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: transform 0.2s; margin-top: 20px; }
         .btn-submit:hover { transform: scale(1.05); }
 
-        /* 動態載入中動畫 */
+        /* 動態載入動畫 */
         .loading-box { display: none; margin: 25px 0; }
         .spinner { width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid #A3E000; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -48,7 +48,6 @@
         .data-item .value { font-size: 20px; font-weight: bold; color: #1a1a1a; }
         .data-item .value.highlight { color: #2e7d32; }
         
-        /* G通道圖表與報告 */
         .chart-container { background: white; padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center; }
         .chart-container h3 { font-size: 16px; color: #333; margin-bottom: 10px; }
         #chart-canvas { width: 100%; max-width: 700px; height: 200px; }
@@ -98,7 +97,7 @@
         <!-- 載入中動畫 -->
         <div class="loading-box" id="loading">
             <div class="spinner"></div>
-            <p id="loading-text" style="font-weight: bold; color: #555;">正在執行 Lab + HSV 雙重濾鏡 segmentation...</p>
+            <p id="loading-text" style="font-weight: bold; color: #555;">正在執行 Lab(a*<118) + HSV 雙重濾鏡 segmentation...</p>
         </div>
 
         <!-- 分析結果報告 -->
@@ -178,17 +177,17 @@
             analyzeBtn.style.display = "none";
             loading.style.display = "block";
 
-            setTimeout(() => { loadingText.innerText = "正在計算凸包 ROI 與極值反光排除..."; }, 800);
+            setTimeout(() => { loadingText.innerText = "正在計算最大連通綠葉區塊與凸包 ROI..."; }, 500);
 
             setTimeout(() => {
                 runImageProcessing();
                 loading.style.display = "none";
                 result.style.display = "block";
                 document.getElementById('ext-box').style.display = "block";
-            }, 1600);
+            }, 1200);
         }
 
-        // 核心影像處理與色彩分析邏輯 (JavaScript Canvas 實現 Python 演算法)
+        // --- 核心演算法：完全復刻 Python OpenCV (Lab + HSV + Max Contour + Convex Hull) ---
         function runImageProcessing() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -203,10 +202,91 @@
             const data = imgData.data;
             const totalPixels = w * h;
 
-            // 摳圖用的 Canvas
+            // 1. 下採樣加速計算連通區域（降採樣步長 step=4）
+            const step = 4;
+            const gridW = Math.floor(w / step);
+            const gridH = Math.floor(h / step);
+            const greenGrid = new Uint8Array(gridW * gridH);
+            const ptsMap = [];
+
+            for (let gy = 0; gy < gridH; gy++) {
+                for (let gx = 0; gx < gridW; gx++) {
+                    let x = gx * step;
+                    let y = gy * step;
+                    let idx = (y * w + x) * 4;
+                    let r = data[idx], g = data[idx+1], b = data[idx+2];
+
+                    let labA = getLabA(r, g, b);
+                    let [hVal, sVal, vVal] = getHSV(r, g, b);
+
+                    // 100% 複製 Python 條件: a_chan < 118 且 HSV(H:30~85, S:40~255, V:30~255)
+                    if (labA < 118 && hVal >= 30 && hVal <= 85 && sVal >= 40 && vVal >= 30) {
+                        greenGrid[gy * gridW + gx] = 1;
+                    }
+                }
+            }
+
+            // 2. 尋找最大綠色連通區塊 (Max Contour / Connected Component)，排除散落根部
+            let visited = new Uint8Array(gridW * gridH);
+            let maxBlob = [];
+
+            for (let i = 0; i < greenGrid.length; i++) {
+                if (greenGrid[i] === 1 && !visited[i]) {
+                    let queue = [i];
+                    visited[i] = 1;
+                    let currentBlob = [];
+
+                    while (queue.length > 0) {
+                        let curr = queue.pop();
+                        let cx = curr % gridW;
+                        let cy = Math.floor(curr / gridW);
+                        currentBlob.push({ x: cx * step, y: cy * step });
+
+                        let neighbors = [
+                            curr - 1, curr + 1, curr - gridW, curr + gridW
+                        ];
+                        for (let n of neighbors) {
+                            if (n >= 0 && n < greenGrid.length && greenGrid[n] === 1 && !visited[n]) {
+                                visited[n] = 1;
+                                queue.push(n);
+                            }
+                        }
+                    }
+
+                    if (currentBlob.length > maxBlob.length) {
+                        maxBlob = currentBlob;
+                    }
+                }
+            }
+
+            // 若未找到綠葉
+            if (maxBlob.length === 0) {
+                alert("未檢測到符合標準的綠葉區域！");
+                return;
+            }
+
+            // 3. 計算真凸包 (Convex Hull) 點集與多邊形面積
+            let hullPoints = getConvexHull(maxBlob);
+            let hullArea = getPolygonArea(hullPoints);
+            let hullPixelCount = Math.round(hullArea);
+
+            // 繪製凸包 Mask canvas 判斷像素點
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = w; maskCanvas.height = h;
+            const maskCtx = maskCanvas.getContext('2d');
+            maskCtx.fillStyle = '#FFFFFF';
+            maskCtx.beginPath();
+            maskCtx.moveTo(hullPoints[0].x, hullPoints[0].y);
+            for (let i = 1; i < hullPoints.length; i++) {
+                maskCtx.lineTo(hullPoints[i].x, hullPoints[i].y);
+            }
+            maskCtx.closePath();
+            maskCtx.fill();
+            const maskData = maskCtx.getImageData(0, 0, w, h).data;
+
+            // 摳圖與統計設定
             const extCanvas = document.getElementById('extracted-canvas');
-            extCanvas.width = w;
-            extCanvas.height = h;
+            extCanvas.width = w; extCanvas.height = h;
             const extCtx = extCanvas.getContext('2d');
             const extImgData = extCtx.createImageData(w, h);
             const extData = extImgData.data;
@@ -216,42 +296,29 @@
             let validGSum = 0;
             let validGCount = 0;
 
-            let minX = w, maxX = 0, minY = h, maxY = 0;
-
             for (let i = 0; i < data.length; i += 4) {
-                let r = data[i];
-                let g = data[i+1];
-                let b = data[i+2];
+                let inHull = maskData[i] > 200; // 屬於凸包內部點
+                let r = data[i], g = data[i+1], b = data[i+2];
 
-                // RGB 轉 HSV 條件過濾 (H: 30~85, S > 0.15, V > 0.12)
-                let [hVal, sVal, vVal] = rgbToHsv(r, g, b);
-                let isGreen = (hVal >= 30 && hVal <= 85 && sVal >= 0.15 && vVal >= 0.12);
+                let labA = getLabA(r, g, b);
+                let [hVal, sVal, vVal] = getHSV(r, g, b);
+                let isGreen = (labA < 118 && hVal >= 30 && hVal <= 85 && sVal >= 40 && vVal >= 30);
 
-                let pixelIndex = i / 4;
-                let x = pixelIndex % w;
-                let y = Math.floor(pixelIndex / w);
-
-                if (isGreen) {
+                if (inHull && isGreen) {
                     greenPixelCount++;
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
-
-                    // 摳圖保留原色彩
                     extData[i] = r;
                     extData[i+1] = g;
                     extData[i+2] = b;
                     extData[i+3] = 255;
 
-                    // G通道統計 (關鍵：排除 G==255 反光點)
+                    // G通道統計 (排除 G==255 反光點)
                     if (g < 255) {
                         gCounts[g]++;
                         validGSum += g;
                         validGCount++;
                     }
                 } else {
-                    // 非綠色區域設置為純白背景 (255, 255, 255)
+                    // 非主體綠葉區全設為純白背景
                     extData[i] = 255;
                     extData[i+1] = 255;
                     extData[i+2] = 255;
@@ -261,18 +328,11 @@
 
             extCtx.putImageData(extImgData, 0, 0);
 
-            // 計算凸包面積估算與指標
-            let bboxW = Math.max(1, maxX - minX);
-            let bboxH = Math.max(1, maxY - minY);
-            let hullPixelCount = Math.round(bboxW * bboxH * 0.78); 
-            if (hullPixelCount < greenPixelCount) hullPixelCount = Math.round(greenPixelCount * 1.12);
-
+            // 4. 計算數據 (完全契合 Python 算式)
             let greenAreaRatio = (greenPixelCount / totalPixels) * 100;
             let solidity = hullPixelCount > 0 ? (greenPixelCount / hullPixelCount) * 100 : 0;
 
-            // 尋找 Peak G 與 Mean G
-            let peakGValue = 0;
-            let maxPeakCount = 0;
+            let peakGValue = 0, maxPeakCount = 0;
             for (let g = 0; g < 256; g++) {
                 if (gCounts[g] > maxPeakCount) {
                     maxPeakCount = gCounts[g];
@@ -281,7 +341,7 @@
             }
             let meanGValue = validGCount > 0 ? (validGSum / validGCount) : 0;
 
-            // 更新數據至畫面
+            // 渲染至前端面板
             document.getElementById('val-total').innerText = totalPixels.toLocaleString();
             document.getElementById('val-hull').innerText = hullPixelCount.toLocaleString();
             document.getElementById('val-green').innerText = greenPixelCount.toLocaleString();
@@ -290,52 +350,97 @@
             document.getElementById('val-peakg').innerText = peakGValue;
             document.getElementById('val-meang').innerText = meanGValue.toFixed(2);
 
-            // 繪製 G Channel 折線圖
             drawGChart(gCounts, peakGValue, maxPeakCount);
         }
 
-        // RGB 轉 HSV 輔助函式
-        function rgbToHsv(r, g, b) {
-            r /= 255; g /= 255; b /= 255;
-            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+        // --- CIE L*a*b* 色彩空間轉化 (專攻 a* 通道) ---
+        function getLabA(r, g, b) {
+            let rn = r / 255, gn = g / 255, bn = b / 255;
+            rn = rn > 0.04045 ? Math.pow((rn + 0.055) / 1.055, 2.4) : rn / 12.92;
+            gn = gn > 0.04045 ? Math.pow((gn + 0.055) / 1.055, 2.4) : gn / 12.92;
+            bn = bn > 0.04045 ? Math.pow((bn + 0.055) / 1.055, 2.4) : bn / 12.92;
+
+            let x = (rn * 0.4124564 + gn * 0.3575761 + bn * 0.1804375) / 0.95047;
+            let y = (rn * 0.2126729 + gn * 0.7151522 + bn * 0.0721750) / 1.00000;
+
+            let fx = x > 0.008856 ? Math.cbrt(x) : (7.787 * x) + (16 / 116);
+            let fy = y > 0.008856 ? Math.cbrt(y) : (7.787 * y) + (16 / 116);
+
+            let aStar = 500 * (fx - fy);
+            return aStar + 128; // 對應 OpenCV 8-bit Lab 格式 (128為中性灰, <118為鮮綠)
+        }
+
+        // --- OpenCV HSV 格式轉化 ---
+        function getHSV(r, g, b) {
+            let rn = r / 255, gn = g / 255, bn = b / 255;
+            let max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
             let h, s, v = max;
             let d = max - min;
             s = max === 0 ? 0 : d / max;
 
-            if (max === min) {
-                h = 0;
-            } else {
+            if (max === min) { h = 0; }
+            else {
                 switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
+                    case rn: h = (gn - bn) / d + (gn < bn ? 6 : 0); break;
+                    case gn: h = (bn - rn) / d + 2; break;
+                    case bn: h = (rn - gn) / d + 4; break;
                 }
                 h /= 6;
             }
-            return [h * 360, s, v];
+            return [h * 180, s * 255, v * 255]; // 對應 OpenCV 範圍 (H:0~180, S:0~255, V:0~255)
         }
 
-        // 繪製 G Channel 分佈圖
+        // --- Andrew's Monotone Chain 凸包演算法 ---
+        function getConvexHull(points) {
+            points.sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+            let lower = [];
+            for (let i = 0; i < points.length; i++) {
+                while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], points[i]) <= 0) {
+                    lower.pop();
+                }
+                lower.push(points[i]);
+            }
+            let upper = [];
+            for (let i = points.length - 1; i >= 0; i--) {
+                while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], points[i]) <= 0) {
+                    upper.pop();
+                }
+                upper.push(points[i]);
+            }
+            upper.pop(); lower.pop();
+            return lower.concat(upper);
+        }
+
+        function cross(o, a, b) {
+            return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+        }
+
+        function getPolygonArea(points) {
+            let area = 0;
+            let j = points.length - 1;
+            for (let i = 0; i < points.length; i++) {
+                area += (points[j].x + points[i].x) * (points[j].y - points[i].y);
+                j = i;
+            }
+            return Math.abs(area / 2);
+        }
+
+        // --- 繪製 G Channel 圖表 ---
         function drawGChart(gCounts, peakG, maxCount) {
             const chartCanvas = document.getElementById('chart-canvas');
             const ctx = chartCanvas.getContext('2d');
-            chartCanvas.width = 700;
-            chartCanvas.height = 200;
-
+            chartCanvas.width = 700; chartCanvas.height = 200;
             ctx.clearRect(0, 0, 700, 200);
 
-            // 背景網格
             ctx.strokeStyle = "#e0e0e0";
             ctx.lineWidth = 1;
             for (let y = 20; y < 180; y += 40) {
                 ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(680, y); ctx.stroke();
             }
 
-            // 折線繪製
             ctx.strokeStyle = "green";
             ctx.lineWidth = 2;
             ctx.beginPath();
-
             for (let i = 0; i < 256; i++) {
                 let x = 40 + (i / 255) * 640;
                 let y = 180 - (maxCount > 0 ? (gCounts[i] / maxCount) * 150 : 0);
@@ -344,17 +449,13 @@
             }
             ctx.stroke();
 
-            // 標註 Peak G
             if (maxCount > 0) {
                 let peakX = 40 + (peakG / 255) * 640;
                 let peakY = 180 - 150;
-                ctx.fillStyle = "red";
-                ctx.beginPath();
-                ctx.arc(peakX, peakY, 5, 0, Math.PI * 2);
-                ctx.fill();
-
+                ctx.fillStyle = "black";
+                ctx.beginPath(); ctx.arc(peakX, peakY, 4, 0, Math.PI * 2); ctx.fill();
                 ctx.font = "bold 13px sans-serif";
-                ctx.fillText(`Peak G = ${peakG}`, peakX + 10, peakY + 5);
+                ctx.fillText(`Peak=${peakG}`, peakX + 10, peakY + 5);
             }
         }
     </script>
