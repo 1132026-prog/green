@@ -20,11 +20,25 @@
         .container { max-width: 900px; margin: 110px auto 40px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
         .page-title { font-size: 28px; color: #2e5a1c; margin-bottom: 20px; }
         
+        /* 模式切換分頁 */
+        .mode-switch { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .tab-btn { background: #e8f5e9; border: 2px solid #A3E000; color: #2e5a1c; padding: 10px 24px; border-radius: 20px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { background: #A3E000; color: #1a1a1a; }
+
+        /* 上傳區域 */
         .upload-area { border: 3px dashed #A3E000; padding: 35px 20px; border-radius: 12px; background: #fafdf5; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
         .upload-area:hover { background: #f0f9e8; }
         .upload-icon { font-size: 48px; margin-bottom: 10px; }
         #file-input { display: none; }
 
+        /* 相機即時預覽區域 */
+        .camera-box { display: none; background: #000; border-radius: 12px; overflow: hidden; position: relative; max-width: 500px; margin: 0 auto 20px; }
+        #webcam { width: 100%; height: auto; display: block; transform: scaleX(1); }
+        .cam-controls { padding: 12px; background: rgba(0,0,0,0.7); display: flex; justify-content: center; gap: 15px; }
+        .btn-snap { background-color: #FF3B71; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background-color: #666; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 15px; cursor: pointer; }
+
+        /* 圖片與分析結果 */
         .preview-box { margin-top: 15px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
         .img-card { width: 100%; max-width: 380px; text-align: center; }
         .img-card h4 { margin-bottom: 8px; color: #2e5a1c; font-size: 16px; }
@@ -72,15 +86,36 @@
     <div class="container">
         <h1 class="page-title">📊 植物綠葉區域分析 (Lab + HSV + Convex Hull)</h1>
         
-        <label for="file-input">
-            <div class="upload-area">
-                <div class="upload-icon">📸</div>
-                <p style="font-size: 18px; font-weight: bold;">點擊此處拍照或選擇植物圖片</p>
-                <p style="color: #888; font-size: 14px; margin-top: 5px;">支援 JPG、PNG 格式</p>
+        <!-- 模式切換按鈕 -->
+        <div class="mode-switch">
+            <button class="tab-btn active" id="tab-file" onclick="switchMode('file')">📁 選擇圖片檔案</button>
+            <button class="tab-btn" id="tab-cam" onclick="switchMode('cam')">📷 開啟相機即時拍照</button>
+        </div>
+
+        <!-- 選擇檔案上傳區 -->
+        <div id="file-section">
+            <label for="file-input">
+                <div class="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <p style="font-size: 18px; font-weight: bold;">點擊此處選擇植物圖片</p>
+                    <p style="color: #888; font-size: 14px; margin-top: 5px;">支援 JPG、PNG 格式</p>
+                </div>
+            </label>
+            <input type="file" id="file-input" accept="image/*" onchange="previewFile()">
+        </div>
+
+        <!-- 即時鏡頭區域 -->
+        <div class="camera-box" id="camera-section">
+            <video id="webcam" autoplay playsinline></video>
+            <div class="cam-controls">
+                <button class="btn-snap" onclick="takeSnapshot()">📸 拍攝照片</button>
+                <button class="btn-cancel" onclick="closeCamera()">關閉鏡頭</button>
             </div>
-        </label>
-        <input type="file" id="file-input" accept="image/*" capture="environment" onchange="previewFile()">
+        </div>
         
+        <!-- 預覽畫布 (隱藏用) -->
+        <canvas id="snapshot-canvas" style="display:none;"></canvas>
+
         <div class="preview-box">
             <div class="img-card" id="orig-box" style="display:none;">
                 <h4>原圖 (Original Image)</h4>
@@ -148,7 +183,77 @@
 
     <script>
         let imgElement = document.getElementById('preview-img');
+        let cameraStream = null;
 
+        // 模式切換邏輯
+        function switchMode(mode) {
+            const fileSec = document.getElementById('file-section');
+            const camSec = document.getElementById('camera-section');
+            const tabFile = document.getElementById('tab-file');
+            const tabCam = document.getElementById('tab-cam');
+
+            if (mode === 'file') {
+                closeCamera();
+                fileSec.style.display = 'block';
+                camSec.style.display = 'none';
+                tabFile.classList.add('active');
+                tabCam.classList.remove('active');
+            } else if (mode === 'cam') {
+                fileSec.style.display = 'none';
+                camSec.style.display = 'block';
+                tabFile.classList.remove('active');
+                tabCam.classList.add('active');
+                startCamera();
+            }
+        }
+
+        // 開啟鏡頭 (優先呼叫後置鏡頭 environment)
+        async function startCamera() {
+            const video = document.getElementById('webcam');
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+            } catch (err) {
+                console.error("無法取得相機權限: ", err);
+                alert("無法開啟相機，請確認瀏覽器已給予相機權限！");
+                switchMode('file');
+            }
+        }
+
+        // 關閉鏡頭串流
+        function closeCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            document.getElementById('camera-section').style.display = 'none';
+        }
+
+        // 拍照 (擷取畫面)
+        function takeSnapshot() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('snapshot-canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 轉為 DataURL 並顯示
+            imgElement.src = canvas.toDataURL('image/png');
+            
+            // UI 更新
+            closeCamera();
+            document.getElementById('orig-box').style.display = "block";
+            document.getElementById('ext-box').style.display = "none";
+            document.getElementById('analyze-btn').style.display = "inline-block";
+            document.getElementById('result').style.display = "none";
+        }
+
+        // 檔案選擇預覽
         function previewFile() {
             const file = document.getElementById('file-input').files[0];
             const analyzeBtn = document.getElementById('analyze-btn');
@@ -207,7 +312,6 @@
             const gridW = Math.floor(w / step);
             const gridH = Math.floor(h / step);
             const greenGrid = new Uint8Array(gridW * gridH);
-            const ptsMap = [];
 
             for (let gy = 0; gy < gridH; gy++) {
                 for (let gx = 0; gx < gridW; gx++) {
