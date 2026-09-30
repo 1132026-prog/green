@@ -7,23 +7,48 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: '微軟正黑體', sans-serif; }
         body { background-color: #f7f9f6; color: #333; }
+
+        /* 導覽列 */
         .custom-navbar { background-color: #A3E000; width: 100%; padding: 10px 40px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
         .nav-brand { font-size: 26px; font-weight: 900; color: #1a1a1a; text-decoration: none; }
         .nav-menu { display: flex; align-items: center; gap: 35px; list-style: none; }
         .nav-menu a { color: #222222; text-decoration: none; font-size: 18px; font-weight: bold; padding: 5px 8px; }
         .nav-menu a:hover { color: #ffffff; }
         .photo-btn { background-color: #FF3B71 !important; color: #fff !important; padding: 8px 20px !important; border-radius: 20px; }
-        .container { max-width: 600px; margin: 110px auto 40px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+
+        /* 上傳容器 */
+        .container { max-width: 700px; margin: 110px auto 40px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
         .page-title { font-size: 28px; color: #2e5a1c; margin-bottom: 20px; }
-        .upload-area { border: 3px dashed #A3E000; padding: 40px 20px; border-radius: 12px; background: #fafdf5; cursor: pointer; margin-bottom: 20px; }
+        
+        .upload-area { border: 3px dashed #A3E000; padding: 35px 20px; border-radius: 12px; background: #fafdf5; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
         .upload-area:hover { background: #f0f9e8; }
         .upload-icon { font-size: 48px; margin-bottom: 10px; }
         #file-input { display: none; }
-        .btn-submit { background-color: #FF3B71; color: white; border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; }
-        #preview-img { max-width: 100%; margin-top: 15px; border-radius: 8px; display: none; }
+
+        .preview-box { margin-top: 15px; position: relative; display: inline-block; width: 100%; max-width: 400px; }
+        #preview-img { width: 100%; border-radius: 10px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+
+        .btn-submit { background-color: #FF3B71; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: transform 0.2s; margin-top: 15px; }
+        .btn-submit:hover { transform: scale(1.05); }
+
+        /* 動態載入中動畫 */
+        .loading-box { display: none; margin: 25px 0; }
+        .spinner { width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid #A3E000; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 分析結果面板 */
+        .result-card { display: none; margin-top: 30px; text-align: left; background: #f0f7e6; padding: 25px; border-radius: 12px; border-left: 6px solid #A3E000; }
+        .result-card h2 { color: #2e5a1c; margin-bottom: 15px; font-size: 22px; display: flex; align-items: center; gap: 8px; }
+        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .data-item { background: white; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .data-item .label { font-size: 13px; color: #777; margin-bottom: 4px; }
+        .data-item .value { font-size: 18px; font-weight: bold; color: #1a1a1a; }
+        .data-item .value.highlight { color: #e91e63; }
+        .advice-box { background: white; padding: 15px; border-radius: 8px; font-size: 15px; line-height: 1.6; color: #444; }
     </style>
 </head>
 <body>
+
     <nav class="custom-navbar">
         <a href="index.html" class="nav-brand">主題名字</a>
         <ul class="nav-menu">
@@ -33,27 +58,104 @@
             <li><a href="upload.html" class="photo-btn">📷 拍照</a></li>
         </ul>
     </nav>
+
     <div class="container">
-        <h1 class="page-title">📷 植物拍照與照片上傳</h1>
+        <h1 class="page-title">📷 植物拍照與 AI 分析</h1>
+        
         <label for="file-input">
             <div class="upload-area">
                 <div class="upload-icon">📸</div>
-                <p style="font-size: 18px; font-weight: bold;">點擊此處拍照或上傳植物圖片</p>
+                <p style="font-size: 18px; font-weight: bold;">點擊此處拍照或選擇圖片</p>
                 <p style="color: #888; font-size: 14px; margin-top: 5px;">支援 JPG、PNG 格式</p>
             </div>
         </label>
         <input type="file" id="file-input" accept="image/*" capture="environment" onchange="previewFile()">
-        <img id="preview-img" alt="圖片預覽">
-        <br><br>
-        <button class="btn-submit" onclick="alert('照片已接收！AI 分析功能準備中...')">開始 AI 分析</button>
+        
+        <div class="preview-box">
+            <img id="preview-img" alt="圖片預覽">
+        </div>
+
+        <br>
+        <button class="btn-submit" id="analyze-btn" onclick="startAnalysis()" style="display: none;">開始 AI 辨識與固碳分析</button>
+
+        <!-- 載入中動畫 -->
+        <div class="loading-box" id="loading">
+            <div class="spinner"></div>
+            <p id="loading-text" style="font-weight: bold; color: #555;">正在掃描葉片特徵...</p>
+        </div>
+
+        <!-- 分析結果報告 -->
+        <div class="result-card" id="result">
+            <h2>🌱 AI 分析報告產出</h2>
+            <div class="data-grid">
+                <div class="data-item">
+                    <div class="label">辨識物種</div>
+                    <div class="value" id="plant-name">台灣百合 (Lilium formosanum)</div>
+                </div>
+                <div class="data-item">
+                    <div class="label">健康指數</div>
+                    <div class="value" id="health-score">92% (良好)</div>
+                </div>
+                <div class="data-item">
+                    <div class="label">預估年固碳量</div>
+                    <div class="value highlight" id="carbon-val">2.4 kg CO₂/年</div>
+                </div>
+                <div class="data-item">
+                    <div class="label">草本保險評級</div>
+                    <div class="value" id="insurance-grade">A 級 (低風險)</div>
+                </div>
+            </div>
+            <div class="advice-box">
+                <strong>💡 養護與碳權建議：</strong>
+                <p id="advice-text">目前植物葉色飽滿，光合作用效率佳。建議每週維持適度水分供給。該植物已記錄於區域碳權資料庫中，具備優良的綠化固碳價值。</p>
+            </div>
+        </div>
     </div>
+
     <script>
+        // 圖片預覽功能
         function previewFile() {
             const preview = document.getElementById('preview-img');
             const file = document.getElementById('file-input').files[0];
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const resultCard = document.getElementById('result');
             const reader = new FileReader();
-            reader.onloadend = function () { preview.src = reader.result; preview.style.display = "block"; }
+
+            reader.onloadend = function () {
+                preview.src = reader.result;
+                preview.style.display = "block";
+                analyzeBtn.style.display = "inline-block"; // 顯示分析按鈕
+                resultCard.style.display = "none"; // 隱藏舊結果
+            }
+
             if (file) { reader.readAsDataURL(file); }
+        }
+
+        // 模擬 AI 分析流程
+        function startAnalysis() {
+            const loading = document.getElementById('loading');
+            const loadingText = document.getElementById('loading-text');
+            const result = document.getElementById('result');
+            const analyzeBtn = document.getElementById('analyze-btn');
+
+            analyzeBtn.style.display = "none";
+            loading.style.display = "block";
+
+            // 模擬步驟 1
+            setTimeout(() => {
+                loadingText.innerText = "計算光合作用與生物量...";
+            }, 1000);
+
+            // 模擬步驟 2
+            setTimeout(() => {
+                loadingText.innerText = "比對碳權資料庫與保險評級...";
+            }, 2000);
+
+            // 顯示結果
+            setTimeout(() => {
+                loading.style.display = "none";
+                result.style.display = "block";
+            }, 3000);
         }
     </script>
 </body>
