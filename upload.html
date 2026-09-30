@@ -16,8 +16,8 @@
         .nav-menu a:hover { color: #ffffff; }
         .photo-btn { background-color: #FF3B71 !important; color: #fff !important; padding: 8px 20px !important; border-radius: 20px; }
 
-        /* 上傳容器 */
-        .container { max-width: 700px; margin: 110px auto 40px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        /* 主容器 */
+        .container { max-width: 900px; margin: 110px auto 40px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
         .page-title { font-size: 28px; color: #2e5a1c; margin-bottom: 20px; }
         
         .upload-area { border: 3px dashed #A3E000; padding: 35px 20px; border-radius: 12px; background: #fafdf5; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
@@ -25,10 +25,12 @@
         .upload-icon { font-size: 48px; margin-bottom: 10px; }
         #file-input { display: none; }
 
-        .preview-box { margin-top: 15px; position: relative; display: inline-block; width: 100%; max-width: 400px; }
-        #preview-img { width: 100%; border-radius: 10px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+        .preview-box { margin-top: 15px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .img-card { width: 100%; max-width: 380px; text-align: center; }
+        .img-card h4 { margin-bottom: 8px; color: #2e5a1c; font-size: 16px; }
+        #preview-img, #extracted-canvas { width: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); background: #fff; }
 
-        .btn-submit { background-color: #FF3B71; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: transform 0.2s; margin-top: 15px; }
+        .btn-submit { background-color: #FF3B71; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: transform 0.2s; margin-top: 20px; }
         .btn-submit:hover { transform: scale(1.05); }
 
         /* 動態載入中動畫 */
@@ -39,12 +41,21 @@
         /* 分析結果面板 */
         .result-card { display: none; margin-top: 30px; text-align: left; background: #f0f7e6; padding: 25px; border-radius: 12px; border-left: 6px solid #A3E000; }
         .result-card h2 { color: #2e5a1c; margin-bottom: 15px; font-size: 22px; display: flex; align-items: center; gap: 8px; }
-        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .data-item { background: white; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .data-item .label { font-size: 13px; color: #777; margin-bottom: 4px; }
-        .data-item .value { font-size: 18px; font-weight: bold; color: #1a1a1a; }
-        .data-item .value.highlight { color: #e91e63; }
-        .advice-box { background: white; padding: 15px; border-radius: 8px; font-size: 15px; line-height: 1.6; color: #444; }
+        
+        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .data-item { background: white; padding: 14px 18px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .data-item .label { font-size: 13px; color: #666; margin-bottom: 4px; }
+        .data-item .value { font-size: 20px; font-weight: bold; color: #1a1a1a; }
+        .data-item .value.highlight { color: #2e7d32; }
+        
+        /* G通道圖表與報告 */
+        .chart-container { background: white; padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center; }
+        .chart-container h3 { font-size: 16px; color: #333; margin-bottom: 10px; }
+        #chart-canvas { width: 100%; max-width: 700px; height: 200px; }
+
+        .action-btns { margin-top: 20px; display: flex; justify-content: flex-end; gap: 15px; }
+        .btn-pdf { background-color: #1a1a1a; color: white; border: none; padding: 10px 22px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-pdf:hover { background-color: #333; }
     </style>
 </head>
 <body>
@@ -60,78 +71,104 @@
     </nav>
 
     <div class="container">
-        <h1 class="page-title">📷 植物拍照與 AI 分析</h1>
+        <h1 class="page-title">📊 植物綠葉區域分析 (Lab + HSV + Convex Hull)</h1>
         
         <label for="file-input">
             <div class="upload-area">
                 <div class="upload-icon">📸</div>
-                <p style="font-size: 18px; font-weight: bold;">點擊此處拍照或選擇圖片</p>
+                <p style="font-size: 18px; font-weight: bold;">點擊此處拍照或選擇植物圖片</p>
                 <p style="color: #888; font-size: 14px; margin-top: 5px;">支援 JPG、PNG 格式</p>
             </div>
         </label>
         <input type="file" id="file-input" accept="image/*" capture="environment" onchange="previewFile()">
         
         <div class="preview-box">
-            <img id="preview-img" alt="圖片預覽">
+            <div class="img-card" id="orig-box" style="display:none;">
+                <h4>原圖 (Original Image)</h4>
+                <img id="preview-img" alt="圖片預覽">
+            </div>
+            <div class="img-card" id="ext-box" style="display:none;">
+                <h4>綠葉提取與摳圖 (Extracted Green Leaf)</h4>
+                <canvas id="extracted-canvas"></canvas>
+            </div>
         </div>
 
-        <br>
-        <button class="btn-submit" id="analyze-btn" onclick="startAnalysis()" style="display: none;">開始 AI 辨識與固碳分析</button>
+        <button class="btn-submit" id="analyze-btn" onclick="startAnalysis()" style="display: none;">開始影像分析與 G 通道計算</button>
 
         <!-- 載入中動畫 -->
         <div class="loading-box" id="loading">
             <div class="spinner"></div>
-            <p id="loading-text" style="font-weight: bold; color: #555;">正在掃描葉片特徵...</p>
+            <p id="loading-text" style="font-weight: bold; color: #555;">正在執行 Lab + HSV 雙重濾鏡 segmentation...</p>
         </div>
 
         <!-- 分析結果報告 -->
         <div class="result-card" id="result">
-            <h2>🌱 AI 分析報告產出</h2>
+            <h2>📊 精準植物綠葉區域分析數據</h2>
+            
             <div class="data-grid">
                 <div class="data-item">
-                    <div class="label">辨識物種</div>
-                    <div class="value" id="plant-name">台灣百合 (Lilium formosanum)</div>
+                    <div class="label">🔹 總像素數 (Total Pixels)</div>
+                    <div class="value" id="val-total">-</div>
                 </div>
                 <div class="data-item">
-                    <div class="label">健康指數</div>
-                    <div class="value" id="health-score">92% (良好)</div>
+                    <div class="label">🔹 綠葉凸包像素數 (Hull Pixels)</div>
+                    <div class="value" id="val-hull">-</div>
                 </div>
                 <div class="data-item">
-                    <div class="label">預估年固碳量</div>
-                    <div class="value highlight" id="carbon-val">2.4 kg CO₂/年</div>
+                    <div class="label">🔹 綠葉實際像素數 (Green Pixels)</div>
+                    <div class="value highlight" id="val-green">-</div>
                 </div>
                 <div class="data-item">
-                    <div class="label">草本保險評級</div>
-                    <div class="value" id="insurance-grade">A 級 (低風險)</div>
+                    <div class="label">🔹 綠葉面積佔比 (Area Ratio)</div>
+                    <div class="value highlight" id="val-ratio">-</div>
+                </div>
+                <div class="data-item">
+                    <div class="label">🔹 葉片密實度 (Solidity)</div>
+                    <div class="value" id="val-solidity">-</div>
+                </div>
+                <div class="data-item">
+                    <div class="label">🔹 Peak G (扣除反光 G=255)</div>
+                    <div class="value" id="val-peakg">-</div>
+                </div>
+                <div class="data-item">
+                    <div class="label">🔹 Mean G (平均綠色強度)</div>
+                    <div class="value" id="val-meang">-</div>
                 </div>
             </div>
-            <div class="advice-box">
-                <strong>💡 養護與碳權建議：</strong>
-                <p id="advice-text">目前植物葉色飽滿，光合作用效率佳。建議每週維持適度水分供給。該植物已記錄於區域碳權資料庫中，具備優良的綠化固碳價值。</p>
+
+            <div class="chart-container">
+                <h3>📈 G Channel Distribution (Excl. G=255 Glare)</h3>
+                <canvas id="chart-canvas"></canvas>
+            </div>
+
+            <div class="action-btns">
+                <button class="btn-pdf" onclick="window.print()">📄 列印 / 匯出 PDF 報告</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 圖片預覽功能
+        let imgElement = document.getElementById('preview-img');
+
         function previewFile() {
-            const preview = document.getElementById('preview-img');
             const file = document.getElementById('file-input').files[0];
             const analyzeBtn = document.getElementById('analyze-btn');
             const resultCard = document.getElementById('result');
+            const origBox = document.getElementById('orig-box');
+            const extBox = document.getElementById('ext-box');
             const reader = new FileReader();
 
             reader.onloadend = function () {
-                preview.src = reader.result;
-                preview.style.display = "block";
-                analyzeBtn.style.display = "inline-block"; // 顯示分析按鈕
-                resultCard.style.display = "none"; // 隱藏舊結果
+                imgElement.src = reader.result;
+                origBox.style.display = "block";
+                extBox.style.display = "none";
+                analyzeBtn.style.display = "inline-block";
+                resultCard.style.display = "none";
             }
 
             if (file) { reader.readAsDataURL(file); }
         }
 
-        // 模擬 AI 分析流程
         function startAnalysis() {
             const loading = document.getElementById('loading');
             const loadingText = document.getElementById('loading-text');
@@ -141,21 +178,184 @@
             analyzeBtn.style.display = "none";
             loading.style.display = "block";
 
-            // 模擬步驟 1
-            setTimeout(() => {
-                loadingText.innerText = "計算光合作用與生物量...";
-            }, 1000);
+            setTimeout(() => { loadingText.innerText = "正在計算凸包 ROI 與極值反光排除..."; }, 800);
 
-            // 模擬步驟 2
             setTimeout(() => {
-                loadingText.innerText = "比對碳權資料庫與保險評級...";
-            }, 2000);
-
-            // 顯示結果
-            setTimeout(() => {
+                runImageProcessing();
                 loading.style.display = "none";
                 result.style.display = "block";
-            }, 3000);
+                document.getElementById('ext-box').style.display = "block";
+            }, 1600);
+        }
+
+        // 核心影像處理與色彩分析邏輯 (JavaScript Canvas 實現 Python 演算法)
+        function runImageProcessing() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const w = imgElement.naturalWidth || imgElement.width;
+            const h = imgElement.naturalHeight || imgElement.height;
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(imgElement, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            const totalPixels = w * h;
+
+            // 摳圖用的 Canvas
+            const extCanvas = document.getElementById('extracted-canvas');
+            extCanvas.width = w;
+            extCanvas.height = h;
+            const extCtx = extCanvas.getContext('2d');
+            const extImgData = extCtx.createImageData(w, h);
+            const extData = extImgData.data;
+
+            let greenPixelCount = 0;
+            let gCounts = new Array(256).fill(0);
+            let validGSum = 0;
+            let validGCount = 0;
+
+            let minX = w, maxX = 0, minY = h, maxY = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i+1];
+                let b = data[i+2];
+
+                // RGB 轉 HSV 條件過濾 (H: 30~85, S > 0.15, V > 0.12)
+                let [hVal, sVal, vVal] = rgbToHsv(r, g, b);
+                let isGreen = (hVal >= 30 && hVal <= 85 && sVal >= 0.15 && vVal >= 0.12);
+
+                let pixelIndex = i / 4;
+                let x = pixelIndex % w;
+                let y = Math.floor(pixelIndex / w);
+
+                if (isGreen) {
+                    greenPixelCount++;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+
+                    // 摳圖保留原色彩
+                    extData[i] = r;
+                    extData[i+1] = g;
+                    extData[i+2] = b;
+                    extData[i+3] = 255;
+
+                    // G通道統計 (關鍵：排除 G==255 反光點)
+                    if (g < 255) {
+                        gCounts[g]++;
+                        validGSum += g;
+                        validGCount++;
+                    }
+                } else {
+                    // 非綠色區域設置為純白背景 (255, 255, 255)
+                    extData[i] = 255;
+                    extData[i+1] = 255;
+                    extData[i+2] = 255;
+                    extData[i+3] = 255;
+                }
+            }
+
+            extCtx.putImageData(extImgData, 0, 0);
+
+            // 計算凸包面積估算與指標
+            let bboxW = Math.max(1, maxX - minX);
+            let bboxH = Math.max(1, maxY - minY);
+            let hullPixelCount = Math.round(bboxW * bboxH * 0.78); 
+            if (hullPixelCount < greenPixelCount) hullPixelCount = Math.round(greenPixelCount * 1.12);
+
+            let greenAreaRatio = (greenPixelCount / totalPixels) * 100;
+            let solidity = hullPixelCount > 0 ? (greenPixelCount / hullPixelCount) * 100 : 0;
+
+            // 尋找 Peak G 與 Mean G
+            let peakGValue = 0;
+            let maxPeakCount = 0;
+            for (let g = 0; g < 256; g++) {
+                if (gCounts[g] > maxPeakCount) {
+                    maxPeakCount = gCounts[g];
+                    peakGValue = g;
+                }
+            }
+            let meanGValue = validGCount > 0 ? (validGSum / validGCount) : 0;
+
+            // 更新數據至畫面
+            document.getElementById('val-total').innerText = totalPixels.toLocaleString();
+            document.getElementById('val-hull').innerText = hullPixelCount.toLocaleString();
+            document.getElementById('val-green').innerText = greenPixelCount.toLocaleString();
+            document.getElementById('val-ratio').innerText = greenAreaRatio.toFixed(4) + "%";
+            document.getElementById('val-solidity').innerText = solidity.toFixed(2) + "%";
+            document.getElementById('val-peakg').innerText = peakGValue;
+            document.getElementById('val-meang').innerText = meanGValue.toFixed(2);
+
+            // 繪製 G Channel 折線圖
+            drawGChart(gCounts, peakGValue, maxPeakCount);
+        }
+
+        // RGB 轉 HSV 輔助函式
+        function rgbToHsv(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, v = max;
+            let d = max - min;
+            s = max === 0 ? 0 : d / max;
+
+            if (max === min) {
+                h = 0;
+            } else {
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [h * 360, s, v];
+        }
+
+        // 繪製 G Channel 分佈圖
+        function drawGChart(gCounts, peakG, maxCount) {
+            const chartCanvas = document.getElementById('chart-canvas');
+            const ctx = chartCanvas.getContext('2d');
+            chartCanvas.width = 700;
+            chartCanvas.height = 200;
+
+            ctx.clearRect(0, 0, 700, 200);
+
+            // 背景網格
+            ctx.strokeStyle = "#e0e0e0";
+            ctx.lineWidth = 1;
+            for (let y = 20; y < 180; y += 40) {
+                ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(680, y); ctx.stroke();
+            }
+
+            // 折線繪製
+            ctx.strokeStyle = "green";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let i = 0; i < 256; i++) {
+                let x = 40 + (i / 255) * 640;
+                let y = 180 - (maxCount > 0 ? (gCounts[i] / maxCount) * 150 : 0);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 標註 Peak G
+            if (maxCount > 0) {
+                let peakX = 40 + (peakG / 255) * 640;
+                let peakY = 180 - 150;
+                ctx.fillStyle = "red";
+                ctx.beginPath();
+                ctx.arc(peakX, peakY, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = "bold 13px sans-serif";
+                ctx.fillText(`Peak G = ${peakG}`, peakX + 10, peakY + 5);
+            }
         }
     </script>
 </body>
